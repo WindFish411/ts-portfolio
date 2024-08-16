@@ -1,39 +1,38 @@
-"use client"
+"use client";
 
-import { Content, asImageSrc, isFilled } from "@prismicio/client";
-import Link from "next/link";
-import React, { useEffect, useRef, useState } from "react";
-import { MdArrowOutward } from "react-icons/md";
-import {gsap} from "gsap";
+import React, { useRef, useState, useEffect } from "react";
+import { asImageSrc, isFilled } from "@prismicio/client";
+import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { MdArrowOutward } from "react-icons/md";
+import { Content } from "@prismicio/client";
 
 gsap.registerPlugin(ScrollTrigger);
 
-type contentListProps = {
+type ContentListProps = {
     items: Content.BlogPostDocument[] | Content.ProjectDocument[];
     contentType: Content.ContentIndexSlice["primary"]["content_type"];
     fallbackItemImage:  Content.ContentIndexSlice["primary"]["fallback_item_image"];
     viewMoreText:  Content.ContentIndexSlice["primary"]["view_more_text"];
 }
 
-export default function ContentList({items, contentType, fallbackItemImage, viewMoreText = "Read More",    
-}: contentListProps){
+export default function ContentList({items, contentType, fallbackItemImage, viewMoreText = "Read More"}: ContentListProps){
     const component = useRef(null);
-    const revealRef = useRef(null);
     const itemsRef = useRef<Array<HTMLLIElement | null>>([]);
-
+    const revealRef = useRef(null);
     const [currentItem, setCurrentItem] = useState<null | number>(null);
-
+    const [hovering, setHovering] = useState(false);
     const lastMousePos = useRef({ x:0, y:0})
 
 
-    const urlPrefix = contentType === "Blog" ? "/blog" : "/project"
+    const urlPrefix = contentType === "Blog" ? "/blog" : "/projects";
 
 
     useEffect(()=>{
         let ctx = gsap.context(()=> {
-            itemsRef.current.forEach((item)=>{
-                gsap.fromTo(item,
+            itemsRef.current.forEach((item, index)=>{
+                gsap.fromTo(
+                    item,
                     {opacity:0, y:20},
                     {
                         opacity:1, 
@@ -47,18 +46,19 @@ export default function ContentList({items, contentType, fallbackItemImage, view
                             end: "bottom center",
                             toggleActions: "play none none none",   
                         },
-                    }
+                    },
                 );
             });
-        });
-    });
+            return () => ctx.revert();
+        }, component);
+    }, []);
 
 
     useEffect(()=> {
         const handleMouseMove = (e: MouseEvent) => {
-            const mousePos = {x: e.clientX, y: e.clientY + window.scrollY}
+            const mousePos = {x: e.clientX, y: e.clientY + window.scrollY};
 
-            const speed = Math.sqrt(Math.pow(mousePos.x - lastMousePos.current.x, 2))
+            const speed = Math.sqrt(Math.pow(mousePos.x - lastMousePos.current.x, 2));
 
             let ctx = gsap.context(()=> {
                 if(currentItem != null){
@@ -81,12 +81,24 @@ export default function ContentList({items, contentType, fallbackItemImage, view
                 return ()=> ctx.revert();
             }, component);
         }
-        window.addEventListener("mousemove", handleMouseMove)
+
+        window.addEventListener("mousemove", handleMouseMove);
 
         return()=> {
-            window.removeEventListener("mousemove", handleMouseMove)
+            window.removeEventListener("mousemove", handleMouseMove);
         }
-    }, [currentItem])
+    }, [hovering, currentItem]);
+
+
+    const onMouseEnter = (index: number)=> {
+        setCurrentItem(index);
+        if (!hovering) setHovering(true);
+    };
+
+    const onMouseLeave = () => {
+        setHovering(false);
+        setCurrentItem(null);
+    };
 
 
 
@@ -101,30 +113,36 @@ export default function ContentList({items, contentType, fallbackItemImage, view
         })
     });
 
-    const onMouseEnter = (index: number)=> {
-        setCurrentItem(index)
-    };
+    
 
-    const onMouseLeave = () => {
-        setCurrentItem(null);
-    };
+    useEffect(()=>{
+        contentImages.forEach((url)=>{
+            if(!url) return;
+            const img = new Image();
+            img.src = url;
+        });
+    }, [contentImages]);
 
-    return(
+    return (
     <div ref={component}>
         <ul 
         className="grid border-b border-b-ferngreen-950"
         onMouseLeave={onMouseLeave}
         >
-            {items.map(
-                (item, index) => (
-                <>
-                    {isFilled.keyText(item.data.title) && (
-                        <li key = {index} className="list-item "
-                        onMouseEnter={() => onMouseEnter(index)}
-                        ref={(el)=>(itemsRef.current[index] = el)}
+            {items.map((item, index) => (
+                
+                <>{isFilled.keyText(item.data.title) && (<li
+                            key = {index} 
+                            ref={(el) => {
+                                if (el) {
+                                  itemsRef.current[index] = el;
+                                }
+                              }}
+                            className="list-item opacity-0f"
+                            onMouseEnter={() => onMouseEnter(index)}
                         >
 
-                            <Link href= {urlPrefix + "/" + item.uid} className="flex flex-col justify-between border-t  border-t-ferngreen-950 py-10 text-ferngreen-950 md:flex-row"
+                            <a href= {urlPrefix + "/" + item.uid} className="flex flex-col justify-between border-t  border-t-ferngreen-950 py-10 text-ferngreen-950 md:flex-row"
                             aria-label={item.data.title} >
                                 <div className="flex flex-col">
                                     <span className="text-3xl font-bold">{item.data.title}</span>
@@ -135,7 +153,7 @@ export default function ContentList({items, contentType, fallbackItemImage, view
                                 <span className="ml-auto flex items-center gap-2  text-xl font-medium md:ml-0">
                                     {viewMoreText} <MdArrowOutward/>
                                     </span>
-                            </Link>
+                            </a>
                         </li>
                     )} 
                 </>

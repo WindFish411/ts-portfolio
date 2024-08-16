@@ -2,7 +2,19 @@
 	{
 		"__TYPE__": "SharedSliceContent",
 		"variation": "default",
-		"primary": {},
+		"primary": {
+			"text": {
+				"__TYPE__": "StructuredTextContent",
+				"value": [
+					{
+						"type": "paragraph",
+						"content": {
+							"text": "Adipisicing cupidatat ipsum deserunt nulla deserunt elit et aute laboris irure elit. Qui veniam fugiat ad deserunt duis laboris laboris non est."
+						}
+					}
+				]
+			}
+		},
 		"items": []
 	}
 ]

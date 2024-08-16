@@ -68,7 +68,7 @@ const TechList = ({ slice }: TechListProps): JSX.Element => {
         </Heading>
       </Bounded>
 
-      {slice.primary.items.map(({tech_color, tech_name, index})=>(
+      {slice.primary.items.map(({tech_color, tech_name}, index)=>(
         <div key={index} className="tech-row mb-8 flex items-center justify-center gap-4 text-ferngreen-200"
         aria-label={tech_name || undefined}
         >
